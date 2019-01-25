@@ -1,6 +1,8 @@
+package com.num3rd.spark.streaming
+
 import org.apache.spark.SparkConf
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.{Seconds,StreamingContext}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 object NetworkWordCount {
   def main(args: Array[String]): Unit = {

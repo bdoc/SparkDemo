@@ -1,3 +1,5 @@
+package com.num3rd.spark.hive
+
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{SparkConf, SparkContext}
 
