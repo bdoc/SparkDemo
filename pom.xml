@@ -10,7 +10,7 @@
 
     <properties>
         <spark.version>1.6.3</spark.version>
-        <scala.version>2.11</scala.version>
+        <scala.version>2.10</scala.version>
     </properties>
 
     <dependencies>
@@ -22,6 +22,11 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming_${scala.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming-kafka_${scala.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
         <dependency>

@@ -1,0 +1,39 @@
+package com.num3rd.spark.streaming
+
+import kafka.serializer.StringDecoder
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+object DirectKafkaWordCount {
+  def main(args: Array[String]): Unit = {
+    if (args.length < 2) {
+      System.err.println(
+        """
+          |Usage: DirectKafkaWordCount <brokers> <topics>
+          |  <brokers> is a list of one or more Kafka brokers
+          |  <topics> is a list of one or more kafka topics to consume from
+          |
+        """.stripMargin)
+      System.exit(1)
+    }
+
+    val Array(brokers, topics) = args
+
+    val sparkConf = new SparkConf().setAppName("DirectKafkaWordCount")
+    val ssc = new StreamingContext(sparkConf, Seconds(2))
+
+    val topicSet = topics.split(",").toSet
+    val kafakParams = Map[String, String]("metadata.broker.list" -> brokers)
+    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafakParams, topicSet)
+
+    val lines = messages.map(_._2)
+    val words = lines.flatMap(_.split(" "))
+    val wordCounts = words.map(x => (x, 1L)).reduceByKey(_ + _)
+    wordCounts.print()
+
+    ssc.start()
+    ssc.awaitTermination()
+  }
+
+}
