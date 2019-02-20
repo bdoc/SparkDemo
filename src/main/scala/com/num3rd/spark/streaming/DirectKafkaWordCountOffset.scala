@@ -51,7 +51,7 @@ object DirectKafkaWordCountOffset {
 
     val messages = zkOffsetData match {
       case None =>
-        KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topic.split(",").toSet)
+        KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, Set(topic))
       case Some(fromOffsets) =>
         KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder, (String, String)](
           ssc,
