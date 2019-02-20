@@ -24,8 +24,8 @@ object DirectKafkaWordCount {
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
     val topicSet = topics.split(",").toSet
-    val kafakParams = Map[String, String]("metadata.broker.list" -> brokers)
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafakParams, topicSet)
+    val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers)
+    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topicSet)
 
     val lines = messages.map(_._2)
     val words = lines.flatMap(_.split(" "))

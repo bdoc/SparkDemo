@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: com.num3rd.spark.streaming.DirectKafkaWordCount
+Main-Class: com.num3rd.spark.streaming.DirectKafkaWordCountOffset
 
