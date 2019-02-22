@@ -1,3 +1,13 @@
 jdk1.7.80
 spark1.63
 scala2.10
+
+export SPARK_MAJOR_VERSION=1
+
+spark-submit \
+--master yarn-client \
+--class com.num3rd.spark.streaming.DirectKafkaWordCountOffset \
+spark-demo-1.0-SNAPSHOT.jar \
+brokers:port \
+zks:port \
+topic
