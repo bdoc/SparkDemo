@@ -5,13 +5,14 @@ import kafka.message.MessageAndMetadata
 import kafka.serializer.StringDecoder
 import kafka.utils.ZkUtils
 import org.I0Itec.zkclient.ZkClient
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka.{HasOffsetRanges, KafkaUtils}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 object DirectKafkaWordCountOffset {
   def main(args: Array[String]): Unit = {
-    if (args.length < 3) {
+    if (args.length < 4) {
       System.err.println(
         """
           |Usage: DirectKafkaWordCount <brokers> <topics>
@@ -23,15 +24,19 @@ object DirectKafkaWordCountOffset {
       System.exit(1)
     }
 
-    val Array(brokers, zks, topic) = args
+    val Array(brokers, groupId, topic, zks) = args
 
     val sparkConf = new SparkConf().setAppName("DirectKafkaWordCountOffset")
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
-    val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers)
+    val kafkaParams = Map[String, String](
+      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
+      ConsumerConfig.GROUP_ID_CONFIG -> groupId,
+      ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> "smallest"
+    )
 
     // /consumers/[groupId]/offsets/[topic]/[partitionId] -> long (offset)
-    val zkPath = "/consumers/ssc/offsets/".concat(topic)
+    val zkPath = "/consumers/".concat(groupId) + "/offsets/".concat(topic)
     val zkClient = new ZkClient(zks)
 
     val (offsetsRangesStrOpt, _) = ZkUtils.readDataMaybeNull(zkClient, zkPath)
