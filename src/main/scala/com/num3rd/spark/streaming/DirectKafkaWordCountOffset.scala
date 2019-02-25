@@ -1,9 +1,10 @@
 package com.num3rd.spark.streaming
 
+import kafka.api.OffsetRequest
 import kafka.common.TopicAndPartition
 import kafka.message.MessageAndMetadata
 import kafka.serializer.StringDecoder
-import kafka.utils.ZkUtils
+import kafka.utils.{ZKStringSerializer, ZkUtils}
 import org.I0Itec.zkclient.ZkClient
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.SparkConf
@@ -27,28 +28,43 @@ object DirectKafkaWordCountOffset {
     val Array(brokers, groupId, topic, zks) = args
 
     val sparkConf = new SparkConf().setAppName("DirectKafkaWordCountOffset")
-    val ssc = new StreamingContext(sparkConf, Seconds(2))
+    val ssc = new StreamingContext(sparkConf, Seconds(10))
 
     val kafkaParams = Map[String, String](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
       ConsumerConfig.GROUP_ID_CONFIG -> groupId,
-      ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> "smallest"
+      ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> OffsetRequest.SmallestTimeString
     )
 
     // /consumers/[groupId]/offsets/[topic]/[partitionId] -> long (offset)
     val zkPath = "/consumers/".concat(groupId) + "/offsets/".concat(topic)
-    val zkClient = new ZkClient(zks)
+    // ZKStringSerializer for serializer, Or will be unreadable
+    val zkClient = new ZkClient(zks, 3000, 3000, ZKStringSerializer)
 
     val (offsetsRangesStrOpt, _) = ZkUtils.readDataMaybeNull(zkClient, zkPath)
 
     val zkOffsetData = offsetsRangesStrOpt match {
       case Some(offsetsRangesStr) =>
-        val offsets = offsetsRangesStr.split(",")
+        var offsets = offsetsRangesStr.split(",")
           .map(s => s.split(":"))
           .map {
             case Array(partitionStr, offsetStr) => (TopicAndPartition(topic, partitionStr.toInt) -> offsetStr.toLong)
           }
           .toMap
+
+        // If new partitions has been added
+        val latestPartitions = ZkUtils.getPartitionsForTopics(zkClient, Seq(topic)).get(topic).get
+        println(offsets + ":" + latestPartitions)
+        if (offsets.size < latestPartitions.size) {
+          val oldPartitions = offsets.keys.map(p => p.partition).toArray
+          val newPartitions = latestPartitions.diff(oldPartitions)
+          if (newPartitions.size > 0) {
+            newPartitions.foreach(partitionId => {
+              // Add new partitions
+              offsets += (TopicAndPartition(topic, partitionId) -> 0)
+            })
+          }
+        }
         Some(offsets)
       case None =>
         None
@@ -71,7 +87,7 @@ object DirectKafkaWordCountOffset {
     val wordCounts = words.map(x => (x, 1L)).reduceByKey(_ + _)
     wordCounts.print()
 
-    messages.foreachRDD(foreachFunc = rdd => {
+    messages.foreachRDD(rdd => {
       if (!rdd.isEmpty()) {
         val offset = rdd.asInstanceOf[HasOffsetRanges].offsetRanges.map(
           offsetRange => s"${offsetRange.partition}:${offsetRange.untilOffset}")
