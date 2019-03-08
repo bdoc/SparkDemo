@@ -11,6 +11,7 @@
     <properties>
         <spark.version>1.6.3</spark.version>
         <scala.version>2.10</scala.version>
+        <hadoop.version>2.7.3</hadoop.version>
     </properties>
 
     <dependencies>
@@ -43,6 +44,11 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.version}</artifactId>
             <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
         </dependency>
 
     </dependencies>
