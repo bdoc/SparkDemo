@@ -104,7 +104,7 @@ object DirectKafkaWordCountOffset {
         println(s"${o.topic} ${o.partition} ${o.fromOffset} ${o.untilOffset}")
 
         partitions.foreach(msg => {
-          print(msg._2 + "===msg")
+          println(msg._2 + "===msg")
         })
 
       }
