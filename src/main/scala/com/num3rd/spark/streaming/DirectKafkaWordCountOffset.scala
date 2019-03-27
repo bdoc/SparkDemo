@@ -54,7 +54,7 @@ object DirectKafkaWordCountOffset {
 
         // If new partitions has been added
         val latestPartitions = ZkUtils.getPartitionsForTopics(zkClient, Seq(topic)).get(topic).get
-        println(offsets + ":" + latestPartitions)
+        println(offsets + ":" + latestPartitions + "===offsets:latestPartitions")
         if (offsets.size < latestPartitions.size) {
           val oldPartitions = offsets.keys.map(p => p.partition).toArray
           val newPartitions = latestPartitions.diff(oldPartitions)
