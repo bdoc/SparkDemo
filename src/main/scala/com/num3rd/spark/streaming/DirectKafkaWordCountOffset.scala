@@ -7,8 +7,8 @@ import kafka.serializer.StringDecoder
 import kafka.utils.{ZKStringSerializer, ZkUtils}
 import org.I0Itec.zkclient.ZkClient
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.spark.SparkConf
-import org.apache.spark.streaming.kafka.{HasOffsetRanges, KafkaUtils}
+import org.apache.spark.{SparkConf, TaskContext}
+import org.apache.spark.streaming.kafka.{HasOffsetRanges, KafkaUtils, OffsetRange}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 object DirectKafkaWordCountOffset {
@@ -94,6 +94,20 @@ object DirectKafkaWordCountOffset {
           .mkString(",")
 
         ZkUtils.updatePersistentPath(zkClient, zkPath, offset)
+      }
+    })
+
+    messages.foreachRDD(rdd => {
+      val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+      rdd.foreachPartition { partitions => {
+        val o: OffsetRange = offsetRanges(TaskContext.get.partitionId)
+        println(s"${o.topic} ${o.partition} ${o.fromOffset} ${o.untilOffset}")
+
+        partitions.foreach(msg => {
+          print(msg._2 + "===msg")
+        })
+
+      }
       }
     })
 
